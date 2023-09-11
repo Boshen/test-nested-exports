@@ -1,56 +1,121 @@
 # Resolving to the incorrect package with webpack (enhanced-resolve)
 
-## Keywords:
+## tldr;
+
+In a monorepo, ESM saves us from resolving to the wrong package when package exports is configured,
+bundler resolution algorithm fails to do so.
+
+## Keywords
 
 * monorepo
 * package.exports
 * bundle resolution algorithm vs ESM resolution
 
-## Scenario:
+## Scenario
 
-In a monorepo, there are two versions of `package` installed in
+In a monorepo, there are two versions of the same `package` installed in the root (`node_modules/package`)
+and in a workspace directory (`packages/app/node_modules/package`).
+
+### `node_modules/package`
 
 The root `node_modules`, with `package.json` and `index.js`:
 
-* node_modules/package/src/index.js
-* node_modules/package/package.json
+* `node_modules/package/src/index.js`
+* `node_modules/package/package.json`
 
 ```json
 {
   "name": "package",
   "version": "1.0.0",
   "exports": {
-    "./es/*": "./src/*"
+    "./src/*": "./src/*"
   }
 }
 ```
 
+### `packages/app/node_modules/package`
+
 And in a app `node_modules`, with `package.json` and `main.js`
 
-* packages/app/node_modules/package/src/main.js
-* packages/app/node_modules/package/package.json
+* `packages/app/node_modules/package/src/main.js`
+* `packages/app/node_modules/package/package.json`
 
 ```json
 {
   "name": "package",
   "version": "0.0.1",
   "exports": {
-    "./es/*": "./src/*"
+    "./src/*": "./src/*"
   }
 }
 ```
 
+Notice this one does not contain index.js.
+
+## Behavior
+
+`resolve('/path/to/packages/app', 'package/src/index.js')`
+
+### enhanced-resolve
+
 The incorrect behavior that comes from enhanced-resolve:
 
-When resolving the specifier `package/es/index.js` inside `./packages/app`,
+When resolving the specifier `package/src/index.js` inside `./packages/app`,
 it first resolves the specifier to `./packages/app/node_modules/package/src/index.js` and misses the file.
 It then continues searching and finds `./node_modules/package/src/index.js`.
 
-The correct behavior from node.js is:
+### node.js
+
+The correct behavior from Node is:
 
 Aborts when `./packages/app/node_modules/package/src/index.js` is not found.
 
 ---
+
+# Explanation
+
+Follow the spec (https://nodejs.org/api/modules.html#all-together)
+
+The route
+
+`LOAD_NODE_MODULES` -> `LOAD_PACKAGE_EXPORTS` -> `RESOLVE_ESM_MATCH` -> `THROW "not found"`
+
+indicates that resolution should stop when a path is not found package#exports.
+
+```
+LOAD_NODE_MODULES(X, START)
+1. let DIRS = NODE_MODULES_PATHS(START)
+2. for each DIR in DIRS:
+   a. LOAD_PACKAGE_EXPORTS(X, DIR)
+   b. LOAD_AS_FILE(DIR/X)
+   c. LOAD_AS_DIRECTORY(DIR/X)
+
+LOAD_PACKAGE_EXPORTS(X, DIR)
+1. Try to interpret X as a combination of NAME and SUBPATH where the name
+   may have a @scope/ prefix and the subpath begins with a slash (`/`).
+2. If X does not match this pattern or DIR/NAME/package.json is not a file,
+   return.
+3. Parse DIR/NAME/package.json, and look for "exports" field.
+4. If "exports" is null or undefined, return.
+5. let MATCH = PACKAGE_EXPORTS_RESOLVE(pathToFileURL(DIR/NAME), "." + SUBPATH,
+   `package.json` "exports", ["node", "require"]) defined in the ESM resolver.
+6. RESOLVE_ESM_MATCH(MATCH)
+
+RESOLVE_ESM_MATCH(MATCH)
+1. let RESOLVED_PATH = fileURLToPath(MATCH)
+2. If the file at RESOLVED_PATH exists, load RESOLVED_PATH as its extension
+   format. STOP
+3. THROW "not found"
+```
+
+---
+
+As a bonus point, the scenario will resolve to the root `./node_modules/package/src/index.js` if `package#exports`
+are removed from both `package.json`s.
+
+---
+
+# Replicate
 
 To replicate the behavior, run `bash test.sh` and see the following output:
 
@@ -58,7 +123,7 @@ To replicate the behavior, run `bash test.sh` and see the following output:
 ```
 Incorrect behavior from enhanced-resolve
 dir: test-nested-exports/packages/app
-specifier: package/es/index.js
+specifier: package/src/index.js
 resolved:  test-nested-exports/node_modules/package/src/index.js
            ^^^^ Notice this is resolved to the root package
 
@@ -66,7 +131,7 @@ resolved:  test-nested-exports/node_modules/package/src/index.js
 
 Correct behavior from node.js
 dir: test-nested-exports/packages/app
-specifier: package/es/index.js
+specifier: package/src/index.js
 node:internal/modules/cjs/loader:560
       throw e;
       ^
