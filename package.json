@@ -1,0 +1,6 @@
+{
+  "name": "test-nested-exports",
+  "dependencies": {
+    "enhanced-resolve": "^5.15.0"
+  }
+}
