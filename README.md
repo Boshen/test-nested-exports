@@ -3,7 +3,7 @@
 ## tldr;
 
 In a monorepo, ESM saves us from resolving to the wrong package when package exports is configured,
-bundler resolution algorithm fails to do so.
+webpack (enhanced-resolve) fails to do so.
 
 ## Keywords
 
