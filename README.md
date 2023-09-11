@@ -151,3 +151,27 @@ Error: Cannot find module 'test-nested-exports/packages/app/node_modules/package
   path: 'test-nested-exports/packages/app/node_modules/package/package.json'
 }
 ```
+
+--- esbuild
+
+Add `import 'package/src/index.js'` to `./packages/app/index.js`
+
+```
+test-nested-exports  main ❯ npx esbuild --bundle ./packages/app/index.js
+✘ [ERROR] Could not resolve "package/src/index.js"
+
+    packages/app/index.js:6:7:
+      6 │ import 'package/src/index.js'
+        ╵        ~~~~~~~~~~~~~~~~~~~~~~
+
+  The module "./src/index.js" was not found on the file system:
+
+    packages/app/node_modules/package/package.json:5:15:
+      5 │     "./src/*": "./src/*"
+        ╵                ~~~~~~~~~
+
+  You can mark the path "package/src/index.js" as external to exclude it from the bundle, which will
+  remove this error.
+
+1 error
+```
