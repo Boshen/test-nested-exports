@@ -16,6 +16,23 @@ bundler resolution algorithm fails to do so.
 In a monorepo, there are two versions of the same `package` installed in the root (`node_modules/package`)
 and in a workspace directory (`packages/app/node_modules/package`).
 
+```
+├── node_modules
+|  └── package
+|     ├── package.json
+|     └── src
+|        └── index.js
+├── packages
+|  └── app
+|     ├── index.js
+|     ├── package.json
+|     ├── node_modules
+|        └── package
+|           ├── package.json
+|           └── src
+|              └── main.js
+```
+
 ### `node_modules/package`
 
 The root `node_modules`, with `package.json` and `index.js`:
