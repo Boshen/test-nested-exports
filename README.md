@@ -5,12 +5,6 @@
 In a monorepo, ESM saves us from resolving to the wrong package when package exports is configured,
 webpack (enhanced-resolve) fails to do so.
 
-## Keywords
-
-* monorepo
-* package.exports
-* bundle resolution algorithm vs ESM resolution
-
 ## Scenario
 
 In a monorepo, there are two versions of the same `package` installed in the root (`node_modules/package`)
