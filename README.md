@@ -18,7 +18,7 @@ and in a workspace directory (`packages/app/node_modules/package`).
 
 ```
 ├── node_modules
-|  └── package
+|  └── package <--
 |     ├── package.json
 |     └── src
 |        └── index.js
@@ -27,7 +27,7 @@ and in a workspace directory (`packages/app/node_modules/package`).
 |     ├── index.js
 |     ├── package.json
 |     ├── node_modules
-|        └── package
+|        └── package <--
 |           ├── package.json
 |           └── src
 |              └── main.js
