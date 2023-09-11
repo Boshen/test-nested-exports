@@ -152,7 +152,9 @@ Error: Cannot find module 'test-nested-exports/packages/app/node_modules/package
 }
 ```
 
---- esbuild
+---
+
+# esbuild
 
 Add `import 'package/src/index.js'` to `./packages/app/index.js`
 
@@ -174,4 +176,27 @@ test-nested-exports  main ❯ npx esbuild --bundle ./packages/app/index.js
   remove this error.
 
 1 error
+```
+
+Remove both `package#exports` and notice it resolves to the root package:
+
+```
+test-nested-exports  main ❯ npx esbuild --bundle ./packages/app/index.js
+(() => {
+  var __require = /* @__PURE__ */ ((x) => typeof require !== "undefined" ? require : typeof Proxy !== "undefined" ? new Proxy(x, {
+    get: (a, b) => (typeof require !== "undefined" ? require : a)[b]
+  }) : x)(function(x) {
+    if (typeof require !== "undefined")
+      return require.apply(this, arguments);
+    throw new Error('Dynamic require of "' + x + '" is not supported');
+  });
+
+  // node_modules/package/src/index.js
+  console.log("index.js in root node_modules");
+
+  // packages/app/index.js
+  console.log("dir:", __dirname);
+  console.log("specifier:", "package/es/index.js");
+  console.log("resolved:", __require.resolve("package/src/index.js"));
+})();
 ```
