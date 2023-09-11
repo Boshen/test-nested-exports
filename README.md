@@ -173,6 +173,8 @@ Error: Cannot find module 'test-nested-exports/packages/app/node_modules/package
 
 # esbuild
 
+esbuild conforms to the spec.
+
 Add `import 'package/src/index.js'` to `./packages/app/index.js`
 
 ```
